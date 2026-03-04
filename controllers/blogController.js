@@ -3,26 +3,12 @@ const Blog = require("../models/blogModel");
 // Get all blogs with pagination (6 per page)
 exports.getAllBlogs = async (req, res) => {
   try {
-    const limit = 6; 
-    const page = parseInt(req.query.page) || 1;
-    const skip = (page - 1) * limit;
-
-    // Remove 'page' from the query so Mongoose doesn't filter by it
     const queryObj = { ...req.query };
-    delete queryObj.page;
-
-    const blogs = await Blog.find(queryObj)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
+    const blogs = await Blog.find(queryObj).sort({ createdAt: -1 });
     const totalBlogs = await Blog.countDocuments(queryObj);
-
     res.json({
       blogs,
-      currentPage: page,
-      totalPages: Math.ceil(totalBlogs / limit),
-      totalResults: totalBlogs
+      totalResults: totalBlogs,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
