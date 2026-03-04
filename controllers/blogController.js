@@ -1,6 +1,6 @@
 const Blog = require("../models/blogModel");
 
-// Get all blogs with pagination (6 per page)
+// Get all blogs
 exports.getAllBlogs = async (req, res) => {
   try {
     const queryObj = { ...req.query };
