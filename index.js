@@ -19,7 +19,7 @@ const blogController = require("./controllers/blogController");
 // Blog Routes
 app.get("/api/blogs/get-all", blogController.getAllBlogs);
 // app.post("/api/blogs/new", blogController.createBlog);
-// app.get("/api/blogs/:id", blogController.getBlogById);
+app.get("/api/blogs/:id", blogController.getBlogById);
 // app.put("/api/blogs/:id", blogController.updateBlog);
 // app.delete("/api/blogs/:id", blogController.deleteBlog);
 
