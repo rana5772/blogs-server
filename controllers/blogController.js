@@ -1,4 +1,6 @@
 const Blog = require("../models/blogModel");
+const { generateBlog } = require("../services/groqBlogGenerator");
+const generateUniqueSlug = require("../utils/generateUniqueSlug");
 
 // Get all blogs with pagination and filtering
 exports.getAllBlogs = async (req, res) => {
@@ -96,5 +98,46 @@ exports.deleteBlog = async (req, res) => {
     res.json({ message: "Blog deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+// generate ai blog
+exports.generateAiBlog = async (req, res) => {
+
+  const secret = req.headers["x-blog-secret"];
+
+  if (secret !== process.env.BLOG_GENERATOR_SECRET) {
+    return res.status(401).json({
+      success: false,
+      error: "Unauthorized",
+    });
+  }
+
+
+  try {
+    const generated = await generateBlog();
+
+    const slug = await generateUniqueSlug(
+      generated.title
+    );
+
+    const blog = await Blog.create({
+      title: generated.title,
+      slug,
+      content: generated.content,
+      category: generated.category,
+    });
+
+    res.status(201).json({
+      success: true,
+      blog,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
