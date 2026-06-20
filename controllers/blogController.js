@@ -5,27 +5,24 @@ const generateUniqueSlug = require("../utils/generateUniqueSlug");
 // Get all blogs with pagination and filtering
 exports.getAllBlogs = async (req, res) => {
   try {
-    // 1. Create a copy of the query for filtering
     const queryObj = { ...req.query };
 
-    // 2. Exclude pagination fields from the filter object
-    const excludedFields = ["page", "limit"];
+    const excludedFields = ["page", "limit", "sort"];
     excludedFields.forEach((el) => delete queryObj[el]);
 
-    // 3. Set pagination variables
-    // Page 1 is default; limit 6 is default
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 6;
     const skip = (page - 1) * limit;
 
-    // 4. Execute Query
-    // We filter using queryObj, then skip/limit for pagination
+    const sortOrder = req.query.sort || "latest";
+
     const blogs = await Blog.find(queryObj)
-      .sort({ createdAt: -1 })
+      .sort({
+        createdAt: sortOrder === "oldest" ? 1 : -1,
+      })
       .skip(skip)
       .limit(limit);
 
-    // 5. Get total count for the specific filter (not all blogs)
     const totalBlogs = await Blog.countDocuments(queryObj);
 
     res.json({
