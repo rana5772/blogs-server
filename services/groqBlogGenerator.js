@@ -34,6 +34,7 @@ Category: ${category}
 Requirements:
 - Generate your own unique topic
 - Around 1000 words
+- Title must be 50 characters or fewer
 - Markdown format
 - Do NOT include a main title in the article body
 - Do NOT include a heading called "Introduction"
