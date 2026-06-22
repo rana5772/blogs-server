@@ -51,10 +51,10 @@ const blogSchema = new mongoose.Schema(
  * Mongoose will automatically proceed once the function block finishes.
  */
 blogSchema.pre("validate", function () {
-  if (this.title) {
+  if (this.title && !this.slug) {
     this.slug = slugify(this.title, {
-      lower: true, // convert to lower case
-      strict: true, // remove special characters like symbols
+      lower: true,
+      strict: true,
     });
   }
 });
