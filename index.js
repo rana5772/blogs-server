@@ -23,6 +23,7 @@ app.get("/api/blogs/get-all", blogController.getAllBlogs);
 app.get("/api/blogs/title/:slug", blogController.getBlogBySlug);
 app.post("/api/blogs/generate-ai",blogController.generateAiBlog);
 app.get("/api/blogs/:id", blogController.getBlogById);
+app.get("/sitemap.xml", blogController.getSitemap);
 
 // Root Route
 app.get("/", (req, res) => {
