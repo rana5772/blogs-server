@@ -16,9 +16,16 @@ const categories = [
 
 async function getNextCategory() {
   const lastBlog = await Blog.findOne().sort({ createdAt: -1 });
-  const nextCategory = categories[(currentIndex + 1) % categories.length];
+  
+  // Find index of the last category; if no previous blog exists, default to -1
+  const currentIndex = lastBlog ? categories.indexOf(lastBlog.category) : -1;
+  
+  // Calculate the next index dynamically and handle wrapping around
+  const nextIndex = (currentIndex + 1) % categories.length;
+  const nextCategory = categories[nextIndex];
 
-  console.log(`Previous: ${lastBlog.category} → Next: ${nextCategory}`);
+  const prevCategoryLog = lastBlog ? lastBlog.category : "None (First Blog)";
+  console.log(`Previous: ${prevCategoryLog} → Next: ${nextCategory}`);
 
   return nextCategory;
 }
