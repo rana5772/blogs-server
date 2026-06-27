@@ -1,32 +1,34 @@
 const Groq = require("groq-sdk");
+const Blog = require("../models/blogModel");
 
 const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 const categories = [
-    "design",
-    "marketing",
-    "business",
-    "technology",
-    "ai automation",
-    "general",
+  "design",
+  "marketing",
+  "business",
+  "technology",
+  "ai automation",
+  "general",
 ];
 
-let currentCategoryIndex = 0;
+async function getNextCategory() {
+  const lastBlog = await Blog.findOne().sort({ createdAt: -1 });
+  const nextCategory = categories[(currentIndex + 1) % categories.length];
+
+  console.log(`Previous: ${lastBlog.category} → Next: ${nextCategory}`);
+
+  return nextCategory;
+}
 
 async function generateBlog() {
+  const category = await getNextCategory();
 
-    const category = categories[currentCategoryIndex];
+  console.log(`Selected category: ${category}`);
 
-    currentCategoryIndex =
-        (currentCategoryIndex + 1) % categories.length;
-
-    console.log(
-        `Selected category: ${category} | Next index: ${currentCategoryIndex}`
-    );
-
-    const prompt = `
+  const prompt = `
 Write a professional blog article.
 
 Category: ${category}
@@ -59,60 +61,51 @@ CONTENT:
 The markdown article content here
 `;
 
-    const completion = await groq.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
-        temperature: 0.8,
-        messages: [
-            {
-                role: "user",
-                content: prompt,
-            },
-        ],
-    });
+  const completion = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    temperature: 0.8,
+    messages: [
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+  });
 
-    const response = completion.choices[0].message.content.trim();
+  const response = completion.choices[0].message.content.trim();
 
-    console.log("\n========== GROQ RESPONSE ==========\n");
-    console.log(response);
-    console.log("\n===================================\n");
+  console.log("\n========== GROQ RESPONSE ==========\n");
+  console.log(response);
+  console.log("\n===================================\n");
 
-    const titleMatch = response.match(
-        /TITLE:\s*(.*?)\s*CONTENT:/s
-    );
+  const titleMatch = response.match(/TITLE:\s*(.*?)\s*CONTENT:/s);
 
-    if (!titleMatch) {
-        throw new Error(
-            "Could not extract title from AI response"
-        );
-    }
+  if (!titleMatch) {
+    throw new Error("Could not extract title from AI response");
+  }
 
-    const title = titleMatch[1].trim();
+  const title = titleMatch[1].trim();
 
-    const contentParts = response.split("CONTENT:");
+  const contentParts = response.split("CONTENT:");
 
-    if (contentParts.length < 2) {
-        throw new Error(
-            "Could not extract content from AI response"
-        );
-    }
+  if (contentParts.length < 2) {
+    throw new Error("Could not extract content from AI response");
+  }
 
-    const content = contentParts[1].trim();
+  const content = contentParts[1].trim();
 
-    console.log("\n========== PARSED BLOG ==========\n");
-    console.log("TITLE:", title);
-    console.log(
-        "CONTENT PREVIEW:",
-        content.substring(0, 200)
-    );
-    console.log("\n=================================\n");
+  console.log("\n========== PARSED BLOG ==========\n");
+  console.log("TITLE:", title);
+  console.log("CONTENT PREVIEW:", content.substring(0, 200));
+  console.log("\n=================================\n");
 
-    return {
-        title,
-        content,
-        category,
-    };
+  return {
+    title,
+    content,
+    category,
+  };
 }
 
 module.exports = {
-    generateBlog,
+  generateBlog,
 };
