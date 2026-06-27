@@ -121,6 +121,15 @@ exports.generateAiBlog = async (req, res) => {
       category: generated.category,
     });
 
+    // Warm the new blog page, blogs page and sitemap (fire-and-forget)
+    Promise.allSettled([
+      fetch(`https://rana.net.in/blog/${blog.slug}`),
+      fetch("https://rana.net.in/blogs"),
+      fetch("https://rana.net.in/sitemap.xml"),
+    ]).catch((err) => {
+      console.error("Warm-up failed:", err);
+    });
+
     res.status(201).json({
       success: true,
       blog,
