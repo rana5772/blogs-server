@@ -204,7 +204,7 @@ exports.getSitemap = async (req, res) => {
         priority: "0.3",
       },
       {
-        loc: "https://rana.net.in/terms-&-conditions",
+        loc: "https://rana.net.in/terms-and-conditions",
         lastmod: "2026-04-02",
         changefreq: "yearly",
         priority: "0.3",
