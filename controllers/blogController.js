@@ -147,10 +147,12 @@ exports.generateAiBlog = async (req, res) => {
 // sitemap update
 exports.getSitemap = async (req, res) => {
   try {
+    // Escape special XML characters
     const escapeXml = (str) => str.replace(/&/g, "&amp;");
 
-    const blogs = await Blog.find({}, "slug updatedAt").sort({
-      updatedAt: -1,
+    // Fetch blogs
+    const blogs = await Blog.find({}, "slug createdAt").sort({
+      createdAt: -1,
     });
 
     const staticPages = [
@@ -227,7 +229,7 @@ exports.getSitemap = async (req, res) => {
     for (const blog of blogs) {
       xml += `  <url>
     <loc>${escapeXml(`https://rana.net.in/blog/${blog.slug}`)}</loc>
-    <lastmod>${blog.updatedAt.toISOString().split("T")[0]}</lastmod>
+    <lastmod>${blog.createdAt.toISOString().split("T")[0]}</lastmod>
     <priority>0.6</priority>
   </url>\n`;
     }
@@ -241,7 +243,12 @@ exports.getSitemap = async (req, res) => {
 
     return res.status(200).end(xml);
   } catch (err) {
+    console.error("❌ Sitemap Error:");
     console.error(err);
-    return res.status(500).send("Failed to generate sitemap.");
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
