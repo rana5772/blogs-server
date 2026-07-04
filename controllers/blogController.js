@@ -147,11 +147,10 @@ exports.generateAiBlog = async (req, res) => {
 // sitemap update
 exports.getSitemap = async (req, res) => {
   try {
-    // Escape special XML characters (keeps & in your URL)
     const escapeXml = (str) => str.replace(/&/g, "&amp;");
 
-    const blogs = await Blog.find({}, "slug createdAt").sort({
-      createdAt: -1,
+    const blogs = await Blog.find({}, "slug updatedAt").sort({
+      updatedAt: -1,
     });
 
     const staticPages = [
@@ -211,35 +210,38 @@ exports.getSitemap = async (req, res) => {
       },
     ];
 
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>`;
-    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
+    // Static pages
     for (const page of staticPages) {
-      xml += `
-  <url>
+      xml += `  <url>
     <loc>${escapeXml(page.loc)}</loc>
     <lastmod>${page.lastmod}</lastmod>
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
-  </url>`;
+  </url>\n`;
     }
 
+    // Blog pages
     for (const blog of blogs) {
-      xml += `
-  <url>
+      xml += `  <url>
     <loc>${escapeXml(`https://rana.net.in/blog/${blog.slug}`)}</loc>
-    <lastmod>${blog.createdAt.toISOString().split("T")[0]}</lastmod>
+    <lastmod>${blog.updatedAt.toISOString().split("T")[0]}</lastmod>
     <priority>0.6</priority>
-  </url>`;
+  </url>\n`;
     }
 
-    xml += `
-</urlset>`;
+    xml += `</urlset>`;
 
-    res.set("Content-Type", "application/xml");
-    res.send(xml);
+    res.set({
+      "Content-Type": "application/xml; charset=UTF-8",
+      "Cache-Control": "public, max-age=300",
+    });
+
+    return res.status(200).end(xml);
   } catch (err) {
     console.error(err);
-    res.status(500).send("Failed to generate sitemap.");
+    return res.status(500).send("Failed to generate sitemap.");
   }
 };
