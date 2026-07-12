@@ -7,14 +7,26 @@ exports.getAllBlogs = async (req, res) => {
   try {
     const queryObj = { ...req.query };
 
-    const excludedFields = ["page", "limit", "sort"];
+    const excludedFields = ["page", "limit", "sort", "all"];
     excludedFields.forEach((el) => delete queryObj[el]);
+
+    const sortOrder = req.query.sort || "latest";
+
+    // Used by sitemap
+    if (req.query.all === "true") {
+      const blogs = await Blog.find(queryObj, "slug createdAt")
+        .sort({
+          createdAt: sortOrder === "oldest" ? 1 : -1,
+        });
+
+      return res.json({
+        blogs,
+      });
+    }
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 6;
     const skip = (page - 1) * limit;
-
-    const sortOrder = req.query.sort || "latest";
 
     const blogs = await Blog.find(queryObj)
       .sort({
@@ -32,7 +44,9 @@ exports.getAllBlogs = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message,
+    });
   }
 };
 
@@ -140,115 +154,6 @@ exports.generateAiBlog = async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message,
-    });
-  }
-};
-
-// sitemap update
-exports.getSitemap = async (req, res) => {
-  try {
-    // Escape special XML characters
-    const escapeXml = (str) => str.replace(/&/g, "&amp;");
-
-    // Fetch blogs
-    const blogs = await Blog.find({}, "slug createdAt").sort({
-      createdAt: -1,
-    });
-
-    const staticPages = [
-      {
-        loc: "https://rana.net.in/",
-        lastmod: "2026-02-27",
-        changefreq: "yearly",
-        priority: "1.0",
-      },
-      {
-        loc: "https://rana.net.in/about",
-        lastmod: "2026-02-27",
-        changefreq: "yearly",
-        priority: "0.9",
-      },
-      {
-        loc: "https://rana.net.in/projects",
-        lastmod: "2026-02-27",
-        changefreq: "monthly",
-        priority: "0.8",
-      },
-      {
-        loc: "https://rana.net.in/pricing",
-        lastmod: "2026-02-27",
-        changefreq: "yearly",
-        priority: "0.8",
-      },
-      {
-        loc: "https://rana.net.in/blogs",
-        lastmod: "2026-02-27",
-        changefreq: "weekly",
-        priority: "0.7",
-      },
-      {
-        loc: "https://rana.net.in/contact",
-        lastmod: "2026-02-27",
-        changefreq: "yearly",
-        priority: "0.6",
-      },
-      {
-        loc: "https://rana.net.in/faqs",
-        lastmod: "2024-02-22",
-        changefreq: "yearly",
-        priority: "0.6",
-      },
-      {
-        loc: "https://rana.net.in/privacy-policy",
-        lastmod: "2026-04-02",
-        changefreq: "yearly",
-        priority: "0.3",
-      },
-      {
-        loc: "https://rana.net.in/terms-and-conditions",
-        lastmod: "2026-04-02",
-        changefreq: "yearly",
-        priority: "0.3",
-      },
-    ];
-
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-
-    // Static pages
-    for (const page of staticPages) {
-      xml += `  <url>
-    <loc>${escapeXml(page.loc)}</loc>
-    <lastmod>${page.lastmod}</lastmod>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
-  </url>\n`;
-    }
-
-    // Blog pages
-    for (const blog of blogs) {
-      xml += `  <url>
-    <loc>${escapeXml(`https://rana.net.in/blog/${blog.slug}`)}</loc>
-    <lastmod>${blog.createdAt.toISOString().split("T")[0]}</lastmod>
-    <priority>0.6</priority>
-  </url>\n`;
-    }
-
-    xml += `</urlset>`;
-
-    res.set({
-      "Content-Type": "application/xml; charset=UTF-8",
-      "Cache-Control": "public, max-age=300",
-    });
-
-    return res.status(200).end(xml);
-  } catch (err) {
-    console.error("❌ Sitemap Error:");
-    console.error(err);
-
-    return res.status(500).json({
-      success: false,
-      message: err.message,
     });
   }
 };
